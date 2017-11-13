@@ -1,7 +1,6 @@
 package com.jcs;
 
 import java.io.*;
-import java.net.URLDecoder;
 import java.util.*;
 
 //import javax.servlet.ServletConfig;
@@ -15,6 +14,8 @@ import org.apache.commons.fileupload.FileUploadBase.SizeLimitExceededException;
 //import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import com.jcs.util.JCSEncrypt;
 //import org.apache.commons.io.output.*;
 
 /***
@@ -30,6 +31,7 @@ public class UploadServlet extends HttpServlet {
 	private int maxFileSize = 10 * 1024 * 1024; //10M
 	private int maxMemSize = 128 * 1024; //128K
 	private File file;
+	private JCSEncrypt encrpt = new JCSEncrypt();
 
 	public void init() {
 		// Get the file location where it would be stored.
@@ -71,30 +73,29 @@ public class UploadServlet extends HttpServlet {
 
 			boolean isPassed = true;
 			String uploadPath = "";
+			String base64iv = "";
+			String encodedKey = "";
+			String base64EncodeData = "";
+			
 			while (i.hasNext()) {
 				FileItem fi = (FileItem) i.next();
 				if (fi.isFormField()) {
 					String fieldName = fi.getFieldName();
 					String value = fi.getString();
 					// simple certificate
-					if ("ac".equals(fieldName)) {
-						if ("jcs".equals(URLDecoder.decode(value, "UTF-8"))) {
-							isPassed = isPassed && true;
-						} else {
-							isPassed = isPassed && false;
-						}
+					if ("encodedKey".equals(fieldName)) {
+						encodedKey = java.net.URLDecoder.decode(value, "UTF-8");
 					}
-					if ("pd".equals(fieldName)) {
-						if ("jcsRU*T?^".equals(URLDecoder.decode(value, "UTF-8"))) {
-							isPassed = isPassed && true;
-						} else {
-							isPassed = isPassed && false;
-						}
+					if ("base64EncodeData".equals(fieldName)) {
+						base64EncodeData = java.net.URLDecoder.decode(value, "UTF-8");
+					}
+					if ("base64iv".equals(fieldName)) {
+						base64iv = java.net.URLDecoder.decode(value, "UTF-8");
 					}
 					if ("uploadPath".equals(fieldName)) {
-						uploadPath = URLDecoder.decode(value, "UTF-8");
+						uploadPath = new String(Base64.getDecoder().decode(java.net.URLDecoder.decode(value, "UTF-8")),"UTF-8");
 					}
-				} else if (!fi.isFormField() && isPassed) {
+				} else if (!fi.isFormField() && encrpt.toCheckIsVaild(encodedKey, base64EncodeData, base64iv)) {
 					String fileName = fi.getName();
 					// Write the file
 					File folder = new File(filePath,uploadPath);
@@ -103,6 +104,9 @@ public class UploadServlet extends HttpServlet {
 					}
 					file = new File(folder, fileName);
 					fi.write(file);
+				} else {
+					isPassed = false;
+					break;
 				}
 			}
 			if (!isPassed) {

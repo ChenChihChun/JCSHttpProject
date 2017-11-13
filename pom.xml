@@ -10,6 +10,8 @@
   
   <properties>
 		<jdk.version>1.8</jdk.version>
+		<spring.version>4.3.12.RELEASE</spring.version>
+
 	</properties>
   
   
@@ -35,6 +37,9 @@
 		<artifactId>javax.servlet-api</artifactId>
 		<version>3.1.0</version>
 	</dependency>
+	
+
+	
   </dependencies>
   <build>
     <finalName>JCSHttpProject</finalName>
